@@ -8,7 +8,7 @@
 #include <cfloat>
 #include <limits>
 #include <unistd.h>
-#define Sleep usleep
+#define Sleep(x) usleep(x * 1000)
 #endif
 
 class Math

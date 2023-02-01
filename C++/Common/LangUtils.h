@@ -23,6 +23,18 @@ public:
 	}
 
 	inline
+	static double Sin(double value)
+	{
+		return sin(value);
+	}
+
+	inline
+	static double Floor(double value)
+	{
+		return floor(value);
+	}
+
+	inline
 	static double Pow(double value, double x)
 	{
 		return pow(value, x);

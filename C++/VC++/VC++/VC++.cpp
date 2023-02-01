@@ -8,7 +8,7 @@ using namespace SimpleRayBench;
 
 int main()
 {
-	const int size = 512;//1024 * 8;
+	const int size = 1024;// *8;
 	Benchmark::Init(size, size);
 
 	unsigned int start = clock();

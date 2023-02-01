@@ -1,10 +1,10 @@
 ﻿#define NUM64
 //#define FOG_BASIC
-//#define RANDOM_CACHE
 
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 #if NUM32
 using Num = System.Single;
@@ -18,47 +18,17 @@ namespace SimpleRayBench
 {
 	static class RandomUtil
 	{
-		static int nextValue;
-
-		#if RANDOM_CACHE
-		static Num[] values = new Num[]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Num NextValue(Num u, Num v)
 		{
-			0.5131366,0.47369808,0.5355348,0.2797321,0.9233443,0.94912815,0.14586163,0.30903548,0.94743615,0.58786625,
-			0.9668644,0.5584841,0.025240779,0.6176654,0.5316545,0.8852849,0.12660599,0.35615206,0.9546824,0.02586317,
-			0.81509244,0.34394866,0.07938832,0.8642365,0.048390687,0.884387,0.55920166,0.86752623,0.3444876,0.07635695,
-			0.68642074,0.8988211,0.58721966,0.6842663,0.32011318,0.71642447,0.15513289,0.83587873,0.37929702,0.11406493,
-			0.21583551,0.90324044,0.15580535,0.19788212,0.9759695,0.82100695,0.18947572,0.36430824,0.92472243,0.017311156,
-			0.91937256,0.99684864,0.8568594,0.97259927,0.59285814,0.58655363,0.7781577,0.2628913,0.026745737,0.5972613,
-			0.809816,0.9051277,0.55815554,0.44243264,0.34004086,0.656188,0.9743796,0.5629352,0.9384745,0.680604,
-			0.2547078,0.010892212,0.9825735,0.40277225,0.9277489,0.34304756,0.2644722,0.07906562,0.23258018,0.45819247,
-			0.6436251,0.72362727,0.0491243,0.9053614,0.017784,0.6906157,0.63710564,0.06327033,0.8212551,0.6816109,
-			0.046097875,0.71246654,0.5903521,0.9587056,0.3274861,0.31728834,0.6412734,0.32748264,0.7084488,0.43491495,
-			0.86271584,0.9702974,0.49212074,0.6956525,0.7211632,0.07477033,0.18114424,0.83223575,0.3600428,0.5805837,
-			0.93793505,0.35527015,0.72051805,0.92048204,0.089633286,0.8884545,0.8599433,0.32220298,0.7847129,0.89836806,
-			0.6645203,0.24697345,0.8602744,0.9965967,0.1467238,0.293316,0.18254852,0.8949484,0.82631147,0.13577425,
-			0.79806566,0.07945639,0.35479784,0.3011884,0.25134295,0.05494255,0.8458432,0.36783832,0.07386756,0.23765498,
-			0.31452072,0.091495454,0.9797041,0.5821717,0.7067076,0.10672462,0.5993222,0.16339159,0.557504,0.56940585,
-			0.51105946,0.72144973,0.79186076,0.38657552,0.5579826,0.05248207,0.88468844,0.8305916,0.038596272,0.9570422,
-			0.2534969,0.21159768,0.6917146,0.092182994,0.014812052,0.15601492,0.47773015,0.897941,0.28146082,0.20175934,
-			0.7023841,0.77531564,0.7636091,0.4588235,0.90350735,0.34414297,0.18683541,0.50955397,0.19094044,0.23574096,
-			0.58244985,0.2165432,0.030815005,0.9202402,0.8731397,0.7973387,0.9560503,0.06517774,0.023783684,0.73838425,
-			0.8529261,0.43987584,0.3967008,0.19308954,0.5763217,0.36454993,0.7974134,0.19139373,0.036942482,0.07471973
-		};
+			const Num randoValueX = 12.9898f;
+			const Num randoValueY = 78.233f;
+			const Num randoValueZ = 43758.543123f;
 
-		public static Num NextValue()
-		{
-			Num result = values[nextValue++];
-			if (nextValue == values.Length) nextValue = 0;
-			return result;
+			Num result = (u * randoValueX) + (v * randoValueY);
+			result = MATH.Sin(result) * randoValueZ;
+			return result - MATH.Floor(result);
 		}
-
-		#else
-		public static Num NextValue()
-		{
-			nextValue = (nextValue * 57 + 43) % 10007;
-			return nextValue / (Num)10007;
-		}
-		#endif
 	}
 
 	public struct Color
@@ -103,13 +73,13 @@ namespace SimpleRayBench
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static Color Lerp(in Color p1, in Color p2, Num t)
+		public static Color Lerp(Color p1, Color p2, Num t)
 		{
 			return p1 + ((p2 - p1) * t);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static Color LerpClamp(in Color p1, in Color p2, Num t)
+		public static Color LerpClamp(Color p1, Color p2, Num t)
 		{
 			return p1 + ((p2 - p1) * MATH.Clamp(t, 0, 1));
 		}
@@ -205,13 +175,13 @@ namespace SimpleRayBench
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Vec3 Reflect(in Vec3 planeNormal)
+		public Vec3 Reflect(Vec3 planeNormal)
 		{
 			return this - (planeNormal * this.Dot(planeNormal) * 2);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static Num FresnelSchlickZero(in Vec3 rayDirection, in Vec3 normal)
+		public static Num FresnelSchlickZero(Vec3 rayDirection, Vec3 normal)
 		{
 			return MATH.Pow(1 - MATH.Max((-rayDirection).Dot(normal), 0), 5);
 		}
@@ -394,7 +364,7 @@ namespace SimpleRayBench
 
 	class RenderThreadData
 	{
-		public int index;
+		public int index, randomIndex;
 		public bool waiting, done;
 		public int x, y, xEnd, yEnd;
 		public RawImage image;
@@ -462,6 +432,7 @@ namespace SimpleRayBench
 				threadDatas[i] = new RenderThreadData()
 				{
 					index = i,
+					randomIndex = i % threadCount,
 					waiting = true,
 					done = false,
 					x = 0,
@@ -493,19 +464,29 @@ namespace SimpleRayBench
 				ray.origin = camera.position;
 
 				// render frames
+				Num widthRange = width - 1;
+				Num heightRange = height - 1;
 				for (int f = 0; f != frames; ++f)
 				{
 					Console.WriteLine($"Frame:{f} started rendering");
-					var frame = movie.frames[f];
+					var colors = movie.frames[f].colors;
 					for (int y = 0; y != height; ++y)
 					{
 						for (int x = 0; x != width; ++x)
 						{
 							ray.direction = new Vec3((x / (Num)(width - 1)) - .5f, (y / (Num)(height - 1)) - .5f, -1).Normalize();
+
+							// generate shared random vector
+							Num randomVal = RandomUtil.NextValue(x / widthRange, y / heightRange);
+							var randomVec = new Vec3(randomVal, randomVal, randomVal) - .5f;
+
+							// trace
 							int maxBounce = maxBounceCount;
 							var light = new Color();
-							Trace(ray, ref light, ref maxBounce);
-							frame.colors[x, y] = light;
+							Trace(ray, ref light, ref maxBounce, randomVec);
+
+							// write result
+							colors[x, y] = light;
 						}
 					}
 					Console.WriteLine($"Frame:{f} finished rendering");
@@ -523,16 +504,13 @@ namespace SimpleRayBench
 					foreach (var data in threadDatas)
 					{
 						data.image = frame;
-						Console.WriteLine("Telling thread to start: " + data.index.ToString());
 						data.waiting = false;
 					}
 
 					// wait for all threads to finish
 					foreach (var data in threadDatas)
 					{
-						Console.WriteLine("Waiting on thread: " + data.index.ToString());
 						while (!data.done) Thread.Sleep(1);
-						Console.WriteLine("Thread finish reported: " + data.index.ToString());
 					}
 
 					Console.WriteLine($"Frame:{f} finished rendering");
@@ -555,16 +533,26 @@ namespace SimpleRayBench
 			ray.origin = camera.position;
 
 			// render image section
-			var image = data.image;
+			var colors = data.image.colors;
+			Num widthRange = width - 1;
+			Num heightRange = height - 1;
 			for (int y = data.y; y < data.yEnd; ++y)
 			{
 				for (int x = data.x; x < data.xEnd; ++x)
 				{
 					ray.direction = new Vec3((x / (Num)(width - 1)) - .5f, (y / (Num)(height - 1)) - .5f, -1).Normalize();
+
+					// generate shared random vector
+					Num randomVal = RandomUtil.NextValue(x / widthRange, y / heightRange);
+					var randomVec = new Vec3(randomVal, randomVal, randomVal) - .5f;
+
+					// trace
 					int maxBounce = maxBounceCount;
 					var light = new Color();
-					Trace(ray, ref light, ref maxBounce);
-					image.colors[x, y] = light;
+					Trace(ray, ref light, ref maxBounce, randomVec);
+
+					// write result
+					colors[x, y] = light;
 				}
 			}
 
@@ -572,7 +560,7 @@ namespace SimpleRayBench
 			data.done = true;
 		}
 
-		static bool Trace(Ray ray, ref Color light, ref int maxBounce)
+		static bool Trace(Ray ray, ref Color light, ref int maxBounce, in Vec3 randomVec)
 		{
 			// find closes object
 			Obj closestObject = null;
@@ -610,16 +598,16 @@ namespace SimpleRayBench
 				for (int i = 0; i != diffusePasses; ++i)
 				{
 					// diffuse surface normal
-					reflectedClosestInfo.normal = closestInfo.normal + ((new Vec3(RandomUtil.NextValue(), RandomUtil.NextValue(), RandomUtil.NextValue()) - .5f) * closestObject.roughness);
+					reflectedClosestInfo.normal = closestInfo.normal + (randomVec * closestObject.roughness);
 					reflectedRay.direction = ray.direction.Reflect(reflectedClosestInfo.normal.Normalize());
 					reflectedRay.origin = closestInfo.point - (reflectedRay.direction * .0001f);// move a little off surface to correct for floating point errors
 
 					// gather surface light
-					GatherLight(closestObject, reflectedClosestInfo, ref diffuseLight);
+					GatherLight(closestObject, reflectedClosestInfo, ref diffuseLight, randomVec);
 
 					// trace from this reflected path
 					maxBounce = maxBounceReset;// reset max bounce here or we lose light average consistancy
-					Trace(reflectedRay, ref reflectedLight, ref maxBounce);
+					Trace(reflectedRay, ref reflectedLight, ref maxBounce, randomVec);
 				}
 
 				// material (diffuse)
@@ -645,7 +633,7 @@ namespace SimpleRayBench
 				{
 					fogPos += fogStep;
 					fogDis += volumeFogStep;
-					if (!IsInShadow(fogPos)) fogLitDis += volumeFogStep;
+					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 					if (i == maxVolumeFogSteps - 1) closestFogDis = (maxVolumeFogSteps * volumeFogStep);
 					if (fogDis > closestDis) break;
 				}
@@ -667,7 +655,7 @@ namespace SimpleRayBench
 				for (int i = 0; i != maxVolumeFogSteps; ++i)
 				{
 					fogPos += fogStep;
-					if (!IsInShadow(fogPos)) fogLitDis += volumeFogStep;
+					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 				}
 				Color fogColorValue = fogColor * (fogLitDis / (maxVolumeFogSteps * volumeFogStep));
 				light = Color.LerpClamp(light, fogColorValue, MATH.Pow(closestDis, fogFalloff) * fogDensity);
@@ -678,7 +666,7 @@ namespace SimpleRayBench
 			return false;
 		}
 
-		static void GatherLight(Obj obj, in HitInfo info, ref Color light)
+		static void GatherLight(Obj obj, in HitInfo info, ref Color light, in Vec3 randomVec)
 		{
 			var objColor = obj.color;
 
@@ -693,7 +681,7 @@ namespace SimpleRayBench
 				foreach (var o in objects)
 				{
 					if (o == obj) continue;
-					var softDir = -l.direction + ((new Vec3(RandomUtil.NextValue(), RandomUtil.NextValue(), RandomUtil.NextValue()) - .5f) * l.softness);
+					var softDir = -l.direction + (randomVec * l.softness);
 					var shadowRay = new Ray(info.point, softDir.Normalize());
 					if (o.Hit(shadowRay, out var shadowInfo))
 					{
@@ -711,13 +699,13 @@ namespace SimpleRayBench
 			}
 		}
 
-		static bool IsInShadow(Vec3 point)
+		static bool IsInShadow(Vec3 point, in Vec3 randomVec)
 		{
 			foreach (var l in directionalLights)
 			{
 				foreach (var o in objects)
 				{
-					var softDir = -l.direction + ((new Vec3(RandomUtil.NextValue(), RandomUtil.NextValue(), RandomUtil.NextValue()) - .5f) * l.softness);
+					var softDir = -l.direction + (randomVec * l.softness);
 					var shadowRay = new Ray(point, softDir.Normalize());
 					if (o.Hit(shadowRay, out var shadowInfo))
 					{

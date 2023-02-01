@@ -9,7 +9,7 @@ namespace SimpleRayBench
 		{
 			//Utils.PrintRandomValues(200); return;
 
-			const int size = 512;//1024 * 8;
+			const int size = 1024;// * 8;
 			Benchmark.Init(size, size);
 
 			var watch = new Stopwatch();

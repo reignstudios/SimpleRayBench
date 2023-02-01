@@ -3,7 +3,6 @@
 
 #define NUM64
 //#define FOG_BASIC
-//#define RANDOM_CACHE
 
 #if defined(NUM32)
 #define Num float
@@ -18,50 +17,18 @@ namespace SimpleRayBench
 	static class RandomUtil
 	{
 	public:
-		static int nextValue;
-
-		#if RANDOM_CACHE
-		static Num[] values = new Num[]
+		inline
+		static Num NextValue(Num u, Num v)
 		{
-			0.5131366,0.47369808,0.5355348,0.2797321,0.9233443,0.94912815,0.14586163,0.30903548,0.94743615,0.58786625,
-			0.9668644,0.5584841,0.025240779,0.6176654,0.5316545,0.8852849,0.12660599,0.35615206,0.9546824,0.02586317,
-			0.81509244,0.34394866,0.07938832,0.8642365,0.048390687,0.884387,0.55920166,0.86752623,0.3444876,0.07635695,
-			0.68642074,0.8988211,0.58721966,0.6842663,0.32011318,0.71642447,0.15513289,0.83587873,0.37929702,0.11406493,
-			0.21583551,0.90324044,0.15580535,0.19788212,0.9759695,0.82100695,0.18947572,0.36430824,0.92472243,0.017311156,
-			0.91937256,0.99684864,0.8568594,0.97259927,0.59285814,0.58655363,0.7781577,0.2628913,0.026745737,0.5972613,
-			0.809816,0.9051277,0.55815554,0.44243264,0.34004086,0.656188,0.9743796,0.5629352,0.9384745,0.680604,
-			0.2547078,0.010892212,0.9825735,0.40277225,0.9277489,0.34304756,0.2644722,0.07906562,0.23258018,0.45819247,
-			0.6436251,0.72362727,0.0491243,0.9053614,0.017784,0.6906157,0.63710564,0.06327033,0.8212551,0.6816109,
-			0.046097875,0.71246654,0.5903521,0.9587056,0.3274861,0.31728834,0.6412734,0.32748264,0.7084488,0.43491495,
-			0.86271584,0.9702974,0.49212074,0.6956525,0.7211632,0.07477033,0.18114424,0.83223575,0.3600428,0.5805837,
-			0.93793505,0.35527015,0.72051805,0.92048204,0.089633286,0.8884545,0.8599433,0.32220298,0.7847129,0.89836806,
-			0.6645203,0.24697345,0.8602744,0.9965967,0.1467238,0.293316,0.18254852,0.8949484,0.82631147,0.13577425,
-			0.79806566,0.07945639,0.35479784,0.3011884,0.25134295,0.05494255,0.8458432,0.36783832,0.07386756,0.23765498,
-			0.31452072,0.091495454,0.9797041,0.5821717,0.7067076,0.10672462,0.5993222,0.16339159,0.557504,0.56940585,
-			0.51105946,0.72144973,0.79186076,0.38657552,0.5579826,0.05248207,0.88468844,0.8305916,0.038596272,0.9570422,
-			0.2534969,0.21159768,0.6917146,0.092182994,0.014812052,0.15601492,0.47773015,0.897941,0.28146082,0.20175934,
-			0.7023841,0.77531564,0.7636091,0.4588235,0.90350735,0.34414297,0.18683541,0.50955397,0.19094044,0.23574096,
-			0.58244985,0.2165432,0.030815005,0.9202402,0.8731397,0.7973387,0.9560503,0.06517774,0.023783684,0.73838425,
-			0.8529261,0.43987584,0.3967008,0.19308954,0.5763217,0.36454993,0.7974134,0.19139373,0.036942482,0.07471973
-		};
+			#define randoValueX 12.9898f
+			#define randoValueY 78.233f
+			#define randoValueZ 43758.543123f
 
-		static Num NextValue()
-		{
-			Num result = values[nextValue++];
-			if (nextValue == values.Length) nextValue = 0;
-			return result;
+			Num result = (u * randoValueX) + (v * randoValueY);
+			result = MATH::Sin(result) * randoValueZ;
+			return result - MATH::Floor(result);
 		}
-
-		#else
-		static Num NextValue()
-		{
-			nextValue = (nextValue * 57 + 43) % 10007;
-			//nextValue = fmod((nextValue * 57 + 43), 10007);// very slow
-			return nextValue / (Num)10007;
-		}
-		#endif
 	};
-	int RandomUtil::nextValue = 0;
 
 	struct Color
 	{
@@ -537,19 +504,29 @@ namespace SimpleRayBench
 				ray.origin = camera->position;
 
 				// render frames
+				Num widthRange = width - 1;
+				Num heightRange = height - 1;
 				for (int f = 0; f != frames; ++f)
 				{
 					std::cout << "Frame:" << f << " started rendering" << std::endl;
-					auto frame = movie->frames[f];
+					auto colors = movie->frames[f]->colors;
 					for (int y = 0; y != height; ++y)
 					{
 						for (int x = 0; x != width; ++x)
 						{
 							ray.direction = Vec3((x / (Num)(width - 1)) - .5f, (y / (Num)(height - 1)) - .5f, -1).Normalize();
+
+							// generate shared random vector
+							Num randomVal = RandomUtil::NextValue(x / widthRange, y / heightRange);
+							auto randomVec = Vec3(randomVal, randomVal, randomVal) - .5f;
+
+							// trace
 							int maxBounce = maxBounceCount;
 							auto light = Color();
-							Trace(ray, &light, &maxBounce);
-							frame->colors[x + (y * width)] = light;
+							Trace(ray, &light, &maxBounce, randomVec);
+
+							// write result
+							colors[x + (y * width)] = light;
 						}
 					}
 					std::cout << "Frame:" << f << " finished rendering" << std::endl;
@@ -568,7 +545,6 @@ namespace SimpleRayBench
 					{
 						auto data = threadDatas[i];
 						data->image = frame;
-						std::cout << "Telling thread to start: " << data->index << std::endl;
 						data->waiting = false;
 					}
 
@@ -576,9 +552,7 @@ namespace SimpleRayBench
 					for (int i = 0; i != threadCount; ++i)
 					{
 						auto data = threadDatas[i];
-						std::cout << "Waiting on thread: " << data->index << std::endl;
 						while (!data->done) Sleep(1);
-						std::cout << "Thread finish reported: " << data->index << std::endl;
 					}
 
 					std::cout << "Frame:" << f << " finished rendering" << std::endl;
@@ -601,16 +575,26 @@ namespace SimpleRayBench
 			ray.origin = camera->position;
 
 			// render image section
-			auto image = data->image;
+			auto colors = data->image->colors;
+			Num widthRange = width - 1;
+			Num heightRange = height - 1;
 			for (int y = data->y; y < data->yEnd; ++y)
 			{
 				for (int x = data->x; x < data->xEnd; ++x)
 				{
 					ray.direction = Vec3((x / (Num)(width - 1)) - .5f, (y / (Num)(height - 1)) - .5f, -1).Normalize();
+					
+					// generate shared random vector
+					Num randomVal = RandomUtil::NextValue(x / widthRange, y / heightRange);
+					auto randomVec = Vec3(randomVal, randomVal, randomVal) - .5f;
+
+					// trace
 					int maxBounce = maxBounceCount;
 					auto light = Color();
-					Trace(ray, &light, &maxBounce);
-					image->colors[x + (y * width)] = light;
+					Trace(ray, &light, &maxBounce, randomVec);
+
+					// write result
+					colors[x + (y * width)] = light;
 				}
 			}
 
@@ -618,7 +602,7 @@ namespace SimpleRayBench
 			data->done = true;
 		}
 
-		static bool Trace(Ray& ray, Color* light, int* maxBounce)
+		static bool Trace(Ray& ray, Color* light, int* maxBounce, Vec3& randomVec)
 		{
 			// find closes object
 			Obj* closestObject = nullptr;
@@ -657,16 +641,16 @@ namespace SimpleRayBench
 				for (int i = 0; i != diffusePasses; ++i)
 				{
 					// diffuse surface normal
-					reflectedClosestInfo.normal = closestInfo.normal + ((Vec3(RandomUtil::NextValue(), RandomUtil::NextValue(), RandomUtil::NextValue()) - .5f) * closestObject->roughness);
+					reflectedClosestInfo.normal = closestInfo.normal + (randomVec * closestObject->roughness);
 					reflectedRay.direction = ray.direction.Reflect(reflectedClosestInfo.normal.Normalize());
 					reflectedRay.origin = closestInfo.point - (reflectedRay.direction * .0001f);// move a little off surface to correct for floating point errors
 
 					// gather surface light
-					GatherLight(closestObject, &reflectedClosestInfo, &diffuseLight);
+					GatherLight(closestObject, &reflectedClosestInfo, &diffuseLight, randomVec);
 
 					// trace from this reflected path
 					*maxBounce = maxBounceReset;// reset max bounce here or we lose light average consistancy
-					Trace(reflectedRay, &reflectedLight, maxBounce);
+					Trace(reflectedRay, &reflectedLight, maxBounce, randomVec);
 				}
 
 				// material (diffuse)
@@ -692,7 +676,7 @@ namespace SimpleRayBench
 				{
 					fogPos = fogPos + fogStep;
 					fogDis += volumeFogStep;
-					if (!IsInShadow(fogPos)) fogLitDis += volumeFogStep;
+					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 					if (i == maxVolumeFogSteps - 1) closestFogDis = (maxVolumeFogSteps * volumeFogStep);
 					if (fogDis > closestDis) break;
 				}
@@ -714,7 +698,7 @@ namespace SimpleRayBench
 				for (int i = 0; i != maxVolumeFogSteps; ++i)
 				{
 					fogPos = fogPos + fogStep;
-					if (!IsInShadow(fogPos)) fogLitDis += volumeFogStep;
+					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 				}
 				Color fogColorValue = fogColor * (fogLitDis / (maxVolumeFogSteps * volumeFogStep));
 				(*light) = Color::LerpClamp((*light), fogColorValue, MATH::Pow(closestDis, fogFalloff) * fogDensity);
@@ -725,7 +709,7 @@ namespace SimpleRayBench
 			return false;
 		}
 
-		static void GatherLight(Obj* obj, HitInfo* info, Color* light)
+		static void GatherLight(Obj* obj, HitInfo* info, Color* light, Vec3& randomVec)
 		{
 			auto objColor = obj->color;
 
@@ -744,7 +728,7 @@ namespace SimpleRayBench
 					auto o = objects[i2];
 
 					if (o == obj) continue;
-					auto softDir = -l->direction + ((Vec3(RandomUtil::NextValue(), RandomUtil::NextValue(), RandomUtil::NextValue()) - .5f) * l->softness);
+					auto softDir = -l->direction + (randomVec * l->softness);
 					auto shadowRay = Ray(info->point, softDir.Normalize());
 					HitInfo shadowInfo;
 					if (o->Hit(shadowRay, &shadowInfo))
@@ -763,7 +747,7 @@ namespace SimpleRayBench
 			}
 		}
 
-		static bool IsInShadow(Vec3& point)
+		static bool IsInShadow(Vec3& point, Vec3& randomVec)
 		{
 			for (int i = 0; i != directionalLightCount; ++i)
 			{
@@ -773,7 +757,7 @@ namespace SimpleRayBench
 				{
 					auto o = objects[i2];
 
-					auto softDir = -l->direction + ((Vec3(RandomUtil::NextValue(), RandomUtil::NextValue(), RandomUtil::NextValue()) - .5f) * l->softness);
+					auto softDir = -l->direction + (randomVec * l->softness);
 					auto shadowRay = Ray(point, softDir.Normalize());
 					HitInfo shadowInfo;
 					if (o->Hit(shadowRay, &shadowInfo))

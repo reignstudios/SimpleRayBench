@@ -14,7 +14,7 @@
 
 namespace SimpleRayBench
 {
-	static class RandomUtil
+	class RandomUtil
 	{
 	public:
 		inline
@@ -410,7 +410,7 @@ namespace SimpleRayBench
 		RawImage* image;
 	};
 
-	static class Benchmark
+	class Benchmark
 	{
 	public:
 		#define diffusePasses 1// use to set multi-pass diffuse blending

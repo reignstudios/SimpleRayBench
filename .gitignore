@@ -60,3 +60,10 @@ local.properties
 
 # PDT-specific
 .buildpath
+
+# data files
+*.png
+*.rgb
+*.dll
+*.lib
+*.exe

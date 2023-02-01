@@ -1,0 +1,1 @@
+clang++ -O2 Clang.cpp -o output/Clang.exe

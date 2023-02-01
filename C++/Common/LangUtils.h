@@ -1,11 +1,17 @@
 #pragma once
 #include <math.h>
 #include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <Windows.h>
 
-static class Math
+#if defined(WINDOWS)
+#include <Windows.h>
+#else
+#include <cfloat>
+#include <limits>
+#include <unistd.h>
+#define Sleep usleep
+#endif
+
+class Math
 {
 public:
 	inline
@@ -65,7 +71,7 @@ public:
 	}
 };
 
-static class MathF
+class MathF
 {
 public:
 	inline
@@ -113,7 +119,7 @@ public:
 	}
 };
 
-static class Environment
+class Environment
 {
 public:
 	static int ProcessorCount()
@@ -121,22 +127,3 @@ public:
 		return std::thread::hardware_concurrency();
 	}
 };
-
-//class Thread
-//{
-//public:
-//	std::thread* thread;
-//
-//	Thread(std::_Fn&& _Fx)
-//	{
-//		thread = new std::thread(_Fx);
-//	}
-//};
-
-//class ManualResetEvent
-//{
-//public:
-//	bool signalled;
-//	pthread_mutex_t mutex;
-//	pthread_cond_t cond;
-//};

@@ -1,8 +1,6 @@
 #include <iostream>
-
-#define WINDOWS
-#include "../../Common/Benchmark.h"
-#include "../../Common/Utils.h"
+#include "../Common/Benchmark.h"
+#include "../Common/Utils.h"
 
 #include <ctime>
 

@@ -1,1 +1,1 @@
-magick.exe convert -size 512X512 -depth 8 image.rgb image.png
+magick.exe convert -size 2048X2048 -depth 8 image.rgb image.png

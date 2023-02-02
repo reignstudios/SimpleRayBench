@@ -27,7 +27,7 @@ namespace SimpleRayBench
 			return data;
 		}
 
-		static void SaveImageData(const wchar_t* filename, char* imageData, int imageDataLength)
+		static void SaveImageData(const char* filename, char* imageData, int imageDataLength)
 		{
 			std::ofstream fout;
 			fout.open(filename, std::ios::binary | std::ios::out);

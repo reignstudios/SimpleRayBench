@@ -20,6 +20,6 @@ int main()
 
 	int imageDataLength;
 	auto imageData = Utils::ConvertRawImageSDR(movie->frames[0], &imageDataLength);
-	Utils::SaveImageData(L"image.rgb", imageData, imageDataLength);
+	Utils::SaveImageData("image.rgb", imageData, imageDataLength);
 	Benchmark::Dispose();
 }

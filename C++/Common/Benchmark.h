@@ -50,7 +50,7 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Color operator+(const Color& p2)
+		Color operator+(const Color& p2) const
 		{
 			return Color(r + p2.r, g + p2.g, b + p2.b);
 		}
@@ -64,13 +64,13 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Color operator-(const Color& p2)
+		Color operator-(const Color& p2) const
 		{
 			return Color(r - p2.r, g - p2.g, b - p2.b);
 		}
 
 		inline
-		Color operator*(const Color& p2)
+		Color operator*(const Color& p2) const
 		{
 			return Color(r * p2.r, g * p2.g, b * p2.b);
 		}
@@ -120,7 +120,7 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Vec3 operator +(const Vec3& p2)
+		Vec3 operator +(const Vec3& p2) const
 		{
 			return Vec3(x + p2.x, y + p2.y, z + p2.z);
 		}
@@ -134,7 +134,7 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Vec3 operator -(const Vec3& p2)
+		Vec3 operator -(const Vec3& p2) const
 		{
 			return Vec3(x - p2.x, y - p2.y, z - p2.z);
 		}
@@ -146,13 +146,13 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Vec3 operator-()
+		Vec3 operator-() const
 		{
 			return Vec3(-x, -y, -z);
 		}
 
 		inline
-		Vec3 operator*(const Vec3& p2)
+		Vec3 operator*(const Vec3& p2) const
 		{
 			return Vec3(x * p2.x, y * p2.y, z * p2.z);
 		}
@@ -170,7 +170,7 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Vec3 operator/(const Vec3& p2)
+		Vec3 operator/(const Vec3& p2) const
 		{
 			return Vec3(x / p2.x, y / p2.y, z / p2.z);
 		}
@@ -182,31 +182,31 @@ namespace SimpleRayBench
 		}
 
 		inline
-		Num Dot()
+		Num Dot() const
 		{
 			return (x * x) + (y * y) + (z * z);
 		}
 
 		inline
-		Num Dot(Vec3 vec)
+		Num Dot(Vec3 vec) const
 		{
 			return (x * vec.x) + (y * vec.y) + (z * vec.z);
 		}
 
 		inline
-		Num Length()
+		Num Length() const
 		{
 			return MATH::Sqrt((x * x) + (y * y) + (z * z));
 		}
 
 		inline
-		Vec3 Normalize()
+		Vec3 Normalize() const
 		{
 			return (*this) / MATH::Sqrt((x * x) + (y * y) + (z * z));
 		}
 
 		inline
-		Vec3 Reflect(Vec3 planeNormal)
+		Vec3 Reflect(Vec3 planeNormal) const
 		{
 			return (*this) - (planeNormal * this->Dot(planeNormal) * 2);
 		}
@@ -263,7 +263,7 @@ namespace SimpleRayBench
 			this->metalic = metalic;
 		}
 
-		virtual bool Hit(Ray& ray, HitInfo* info)
+		virtual bool Hit(const Ray& ray, HitInfo& info)
 		{
 			return false;
 		}
@@ -282,12 +282,12 @@ namespace SimpleRayBench
 			this->radius = radius;
 		}
 
-		virtual bool Hit(Ray& ray, HitInfo* info)
+		virtual bool Hit(const Ray& ray, HitInfo& info)
 		{
 			// if ray pointing wrong direction ignore
 			if (ray.direction.Dot(ray.origin - center) >= 0)
 			{
-				*info = HitInfo();
+				info = HitInfo();
 				return false;
 			}
 
@@ -301,7 +301,7 @@ namespace SimpleRayBench
 			Num disc = b * b - a * c;
 			if (disc < 0)
 			{
-				*info = HitInfo();
+				info = HitInfo();
 				return false;
 			}
 
@@ -311,9 +311,9 @@ namespace SimpleRayBench
 			Num t1 = (-b - sqrtDisc) * invA;
 			//Num t2 = (-b + sqrtDisc) * invA;
 
-			info->point = ray.origin + t1 * ray.direction;
+			info.point = ray.origin + t1 * ray.direction;
 			//info.point = ray.origin + t2 * ray.direction;
-			info->normal = (info->point - center).Normalize();
+			info.normal = (info.point - center).Normalize();
 
 			return true;
 		}
@@ -331,12 +331,12 @@ namespace SimpleRayBench
 			this->normal = normal.Normalize();
 		}
 
-		virtual bool Hit(Ray& ray, HitInfo* info)
+		virtual bool Hit(const Ray& ray, HitInfo& info)
 		{
 			// if ray pointing wrong direction ignore
 			if (ray.direction.Dot(normal) >= 0)
 			{
-				*info = HitInfo();
+				info = HitInfo();
 				return false;
 			}
 
@@ -346,13 +346,13 @@ namespace SimpleRayBench
 				Num t = (center - ray.origin).Dot(normal) / denom;
 				if (t >= 0)
 				{
-					info->point = ray.origin + (ray.direction * t);
-					info->normal = normal;
+					info.point = ray.origin + (ray.direction * t);
+					info.normal = normal;
 					return true;
 				}
 			}
 
-			*info = HitInfo();
+			info = HitInfo();
 			return false;
 		}
 	};
@@ -539,7 +539,7 @@ namespace SimpleRayBench
 							// trace
 							int maxBounce = maxBounceCount;
 							auto light = Color();
-							Trace(ray, light, &maxBounce, randomVec);
+							Trace(ray, light, maxBounce, randomVec);
 
 							// write result
 							colors[x + (y * width)] = light;
@@ -607,7 +607,7 @@ namespace SimpleRayBench
 					// trace
 					int maxBounce = maxBounceCount;
 					auto light = Color();
-					Trace(ray, light, &maxBounce, randomVec);
+					Trace(ray, light, maxBounce, randomVec);
 
 					// write result
 					colors[x + (y * width)] = light;
@@ -618,7 +618,7 @@ namespace SimpleRayBench
 			data->done = true;
 		}
 
-		static bool Trace(Ray& ray, Color& light, int* maxBounce, Vec3& randomVec)
+		static bool Trace(const Ray& ray, Color& light, int& maxBounce, Vec3& randomVec)
 		{
 			// find closes object
 			Obj* closestObject = nullptr;
@@ -628,7 +628,7 @@ namespace SimpleRayBench
 			{
 				auto obj = objects[o];
 				HitInfo info;
-				if (obj->Hit(ray, &info))
+				if (obj->Hit(ray, info))
 				{
 					Num dis = (ray.origin - info.point).Length();
 					if (dis < closestDis)
@@ -643,9 +643,9 @@ namespace SimpleRayBench
 			// process lighting
 			if (closestObject != nullptr)
 			{
-				if (*maxBounce <= 0) return false;
-				(*maxBounce)--;
-				int maxBounceReset = *maxBounce;
+				if (maxBounce <= 0) return false;
+				maxBounce--;
+				int maxBounceReset = maxBounce;
 
 				// buffer diffuse pass state objects
 				auto reflectedClosestInfo = closestInfo;
@@ -665,7 +665,7 @@ namespace SimpleRayBench
 					GatherLight(closestObject, reflectedClosestInfo, diffuseLight, randomVec);
 
 					// trace from this reflected path
-					*maxBounce = maxBounceReset;// reset max bounce here or we lose light average consistancy
+					maxBounce = maxBounceReset;// reset max bounce here or we lose light average consistancy
 					Trace(reflectedRay, reflectedLight, maxBounce, randomVec);
 				}
 
@@ -725,7 +725,7 @@ namespace SimpleRayBench
 			return false;
 		}
 
-		static void GatherLight(Obj* obj, HitInfo& info, Color& light, Vec3& randomVec)
+		static void GatherLight(Obj* obj, const HitInfo& info, Color& light, const Vec3& randomVec)
 		{
 			auto objColor = obj->color;
 
@@ -747,7 +747,7 @@ namespace SimpleRayBench
 					auto softDir = -l->direction + (randomVec * l->softness);
 					auto shadowRay = Ray(info.point, softDir.Normalize());
 					HitInfo shadowInfo;
-					if (o->Hit(shadowRay, &shadowInfo))
+					if (o->Hit(shadowRay, shadowInfo))
 					{
 						inShadow = true;
 						break;
@@ -763,7 +763,7 @@ namespace SimpleRayBench
 			}
 		}
 
-		static bool IsInShadow(Vec3& point, Vec3& randomVec)
+		static bool IsInShadow(const Vec3& point, const Vec3& randomVec)
 		{
 			for (int i = 0; i != directionalLightCount; ++i)
 			{
@@ -776,7 +776,7 @@ namespace SimpleRayBench
 					auto softDir = -l->direction + (randomVec * l->softness);
 					auto shadowRay = Ray(point, softDir.Normalize());
 					HitInfo shadowInfo;
-					if (o->Hit(shadowRay, &shadowInfo))
+					if (o->Hit(shadowRay, shadowInfo))
 					{
 						return true;
 					}

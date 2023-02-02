@@ -67,3 +67,4 @@ local.properties
 *.dll
 *.lib
 *.exe
+*.7z

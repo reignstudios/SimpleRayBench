@@ -56,6 +56,14 @@ namespace SimpleRayBench
 		}
 
 		inline
+		void operator+=(const Color& p1)
+		{
+			this->r += p1.r;
+			this->g += p1.g;
+			this->b += p1.b;
+		}
+
+		inline
 		Color operator-(const Color& p2)
 		{
 			return Color(r - p2.r, g - p2.g, b - p2.b);
@@ -115,6 +123,14 @@ namespace SimpleRayBench
 		Vec3 operator +(const Vec3& p2)
 		{
 			return Vec3(x + p2.x, y + p2.y, z + p2.z);
+		}
+
+		inline
+		void operator+=(const Vec3& p1)
+		{
+			this->x += p1.x;
+			this->y += p1.y;
+			this->z += p1.z;
 		}
 
 		inline
@@ -523,7 +539,7 @@ namespace SimpleRayBench
 							// trace
 							int maxBounce = maxBounceCount;
 							auto light = Color();
-							Trace(ray, &light, &maxBounce, randomVec);
+							Trace(ray, light, &maxBounce, randomVec);
 
 							// write result
 							colors[x + (y * width)] = light;
@@ -591,7 +607,7 @@ namespace SimpleRayBench
 					// trace
 					int maxBounce = maxBounceCount;
 					auto light = Color();
-					Trace(ray, &light, &maxBounce, randomVec);
+					Trace(ray, light, &maxBounce, randomVec);
 
 					// write result
 					colors[x + (y * width)] = light;
@@ -602,7 +618,7 @@ namespace SimpleRayBench
 			data->done = true;
 		}
 
-		static bool Trace(Ray& ray, Color* light, int* maxBounce, Vec3& randomVec)
+		static bool Trace(Ray& ray, Color& light, int* maxBounce, Vec3& randomVec)
 		{
 			// find closes object
 			Obj* closestObject = nullptr;
@@ -646,25 +662,25 @@ namespace SimpleRayBench
 					reflectedRay.origin = closestInfo.point - (reflectedRay.direction * .0001f);// move a little off surface to correct for floating point errors
 
 					// gather surface light
-					GatherLight(closestObject, &reflectedClosestInfo, &diffuseLight, randomVec);
+					GatherLight(closestObject, reflectedClosestInfo, diffuseLight, randomVec);
 
 					// trace from this reflected path
 					*maxBounce = maxBounceReset;// reset max bounce here or we lose light average consistancy
-					Trace(reflectedRay, &reflectedLight, maxBounce, randomVec);
+					Trace(reflectedRay, reflectedLight, maxBounce, randomVec);
 				}
 
 				// material (diffuse)
-				(*light) = diffuseLight / diffusePasses;
+				light = diffuseLight / diffusePasses;
 
 				// material (reflection)
 				reflectedLight = reflectedLight / diffusePasses;
 				Num fresnel = 1 - Vec3::FresnelSchlickZero(ray.direction, closestInfo.normal);
-				(*light) = (*light) + Color::Lerp(reflectedLight, reflectedLight * closestObject->color, closestObject->metalic * fresnel) * closestObject->reflectiveness;
+				light += Color::Lerp(reflectedLight, reflectedLight * closestObject->color, closestObject->metalic * fresnel) * closestObject->reflectiveness;
 
 				// fog
 				#if defined(FOG_BASIC)
 				// basic fog just uses fog color directly
-				(*light) = Color::LerpClamp((*light), fogColor, MATH::Pow(closestDis, fogFalloff) * fogDensity);
+				light = Color::LerpClamp(light, fogColor, MATH::Pow(closestDis, fogFalloff) * fogDensity);
 				#else
 				// volume fog tracing taking into account shadows
 				auto fogPos = ray.origin;
@@ -674,20 +690,20 @@ namespace SimpleRayBench
 				Num closestFogDis = closestDis;
 				for (int i = 0; i != maxVolumeFogSteps; ++i)
 				{
-					fogPos = fogPos + fogStep;
+					fogPos += fogStep;
 					fogDis += volumeFogStep;
 					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 					if (i == maxVolumeFogSteps - 1) closestFogDis = (maxVolumeFogSteps * volumeFogStep);
 					if (fogDis > closestDis) break;
 				}
 				Color fogColorValue = fogColor * (fogLitDis / closestFogDis);
-				(*light) = Color::LerpClamp((*light), fogColorValue, MATH::Pow(closestDis, fogFalloff) * fogDensity);
+				light = Color::LerpClamp(light, fogColorValue, MATH::Pow(closestDis, fogFalloff) * fogDensity);
 				#endif
 				
 				return true;
 			}
 			#if defined(FOG_BASIC)
-			(*light) = (*light) + fogColor;
+			light += fogColor;
 			#else
 			else
 			{
@@ -697,11 +713,11 @@ namespace SimpleRayBench
 				Num fogLitDis = 0;
 				for (int i = 0; i != maxVolumeFogSteps; ++i)
 				{
-					fogPos = fogPos + fogStep;
+					fogPos += fogStep;
 					if (!IsInShadow(fogPos, randomVec)) fogLitDis += volumeFogStep;
 				}
 				Color fogColorValue = fogColor * (fogLitDis / (maxVolumeFogSteps * volumeFogStep));
-				(*light) = Color::LerpClamp((*light), fogColorValue, MATH::Pow(closestDis, fogFalloff) * fogDensity);
+				light = Color::LerpClamp(light, fogColorValue, MATH::Pow(closestDis, fogFalloff) * fogDensity);
 			}
 			#endif
 
@@ -709,12 +725,12 @@ namespace SimpleRayBench
 			return false;
 		}
 
-		static void GatherLight(Obj* obj, HitInfo* info, Color* light, Vec3& randomVec)
+		static void GatherLight(Obj* obj, HitInfo& info, Color& light, Vec3& randomVec)
 		{
 			auto objColor = obj->color;
 
 			// ambient
-			(*light) = (*light) + objColor * ambientLight;
+			light += objColor * ambientLight;
 
 			// directional
 			bool inShadow = false;
@@ -729,7 +745,7 @@ namespace SimpleRayBench
 
 					if (o == obj) continue;
 					auto softDir = -l->direction + (randomVec * l->softness);
-					auto shadowRay = Ray(info->point, softDir.Normalize());
+					auto shadowRay = Ray(info.point, softDir.Normalize());
 					HitInfo shadowInfo;
 					if (o->Hit(shadowRay, &shadowInfo))
 					{
@@ -741,8 +757,8 @@ namespace SimpleRayBench
 				// diffuse
 				if (!inShadow)
 				{
-					Num d = MATH::Max(info->normal.Dot(-l->direction), 0);
-					(*light) = (*light) + objColor * l->color * d;
+					Num d = MATH::Max(info.normal.Dot(-l->direction), 0);
+					light += objColor * l->color * d;
 				}
 			}
 		}

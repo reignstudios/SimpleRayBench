@@ -560,7 +560,7 @@ namespace SimpleRayBench
 			data.done = true;
 		}
 
-		static bool Trace(Ray ray, ref Color light, ref int maxBounce, in Vec3 randomVec)
+		static bool Trace(in Ray ray, ref Color light, ref int maxBounce, in Vec3 randomVec)
 		{
 			// find closes object
 			Obj closestObject = null;
@@ -699,7 +699,7 @@ namespace SimpleRayBench
 			}
 		}
 
-		static bool IsInShadow(Vec3 point, in Vec3 randomVec)
+		static bool IsInShadow(in Vec3 point, in Vec3 randomVec)
 		{
 			foreach (var l in directionalLights)
 			{

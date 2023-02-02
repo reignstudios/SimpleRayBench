@@ -1,0 +1,1 @@
+dotnet publish NET7.sln --os linux -a arm64 -c release --self-contained true

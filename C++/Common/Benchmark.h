@@ -483,6 +483,7 @@ namespace SimpleRayBench
 			// start threads
 			threadsAlive = true;
 			threadCount = Environment::ProcessorCount();
+			std::cout << "Thread Count: " << threadCount << std::endl;
 			threadDatas = new RenderThreadData*[threadCount];
 			threads = new std::thread*[threadCount];
 			for (int i = 0; i != threadCount; ++i)

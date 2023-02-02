@@ -423,6 +423,7 @@ namespace SimpleRayBench
 
 			// start threads
 			int threadCount = Environment.ProcessorCount;
+			Console.WriteLine("Thread Count: " + threadCount.ToString());
 			threadDatas = new RenderThreadData[threadCount];
 			threads = new Thread[threadCount];
 			for (int i = 0; i != threadCount; ++i)

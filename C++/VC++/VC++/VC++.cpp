@@ -5,18 +5,20 @@
 #include "../../Common/Utils.h"
 
 #include <ctime>
+#include <chrono>
 
 using namespace SimpleRayBench;
 
 int main()
 {
-	const int size = 1024 * 8;// image size
+	const int size = 1024 * 2;// image size
 	Benchmark::Init(size, size);
 
-	unsigned int start = clock();
-	auto movie = Benchmark::Render(false);
-	double sec = ((clock() - start) / (double)CLOCKS_PER_SEC);
-	std::cout << "Render Time: " << sec << "s" << std::endl;
+	auto start = std::chrono::high_resolution_clock::now();
+	auto movie = Benchmark::Render(false);// run benchmark
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> sec = end - start;
+	std::cout << "Render Time: " << sec.count() << "s" << std::endl;
 
 	// NOTE: enable this to save raw RGB image data
 	/*int imageDataLength;

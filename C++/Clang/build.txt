@@ -1,1 +1,0 @@
-clang++ --std=c++17 -O2 Clang.cpp -o output/Clang.exe

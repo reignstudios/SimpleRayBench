@@ -89,6 +89,18 @@ public:
 	}
 
 	inline
+	static float Sin(float value)
+	{
+		return sin(value);
+	}
+
+	inline
+	static float Floor(float value)
+	{
+		return floor(value);
+	}
+
+	inline
 	static float Pow(float value, float x)
 	{
 		return pow(value, x);

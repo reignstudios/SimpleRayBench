@@ -1,8 +1,9 @@
 #pragma once
 #include "LangUtils.h"
 
-#define NUM64
-//#define FOG_BASIC
+#define NUM32
+//#define NUM64
+#define FOG_BASIC
 
 #if defined(NUM32)
 #define Num float

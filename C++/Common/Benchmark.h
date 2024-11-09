@@ -3,7 +3,7 @@
 
 #define NUM32
 //#define NUM64
-#define FOG_BASIC
+//#define FOG_BASIC
 
 #if defined(NUM32)
 #define Num float
